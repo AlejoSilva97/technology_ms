@@ -33,6 +33,7 @@ dependencies {
 	implementation 'org.springframework.boot:spring-boot-starter-aop'
     implementation 'io.asyncer:r2dbc-mysql:1.1.2'
     implementation 'org.mapstruct:mapstruct:1.5.5.Final'
+    implementation 'org.springdoc:springdoc-openapi-starter-webflux-ui:2.6.0'
     compileOnly 'org.projectlombok:lombok:1.18.32'
     annotationProcessor 'org.projectlombok:lombok:1.18.32'
     annotationProcessor 'org.projectlombok:lombok-mapstruct-binding:0.2.0'
