@@ -22,7 +22,7 @@ import java.time.Instant;
 import java.util.List;
 
 @Component
-@Order(-2) // Prioridad alta para que intercepte antes que el manejador por defecto de Spring Boot
+@Order(-2)
 @Slf4j
 public class GlobalExceptionHandler extends AbstractErrorWebExceptionHandler {
 
@@ -37,12 +37,10 @@ public class GlobalExceptionHandler extends AbstractErrorWebExceptionHandler {
 
     @Override
     protected RouterFunction<ServerResponse> getRoutingFunction(ErrorAttributes errorAttributes) {
-        // Captura absolutamente cualquier petición que haya fallado en el flujo funcional
         return RouterFunctions.route(RequestPredicates.all(), this::renderErrorResponse);
     }
 
     private Mono<ServerResponse> renderErrorResponse(ServerRequest request) {
-        // Recuperamos la excepción real que ocurrió en el flujo reactivo
         Throwable error = getError(request);
 
         if (error instanceof BusinessException businessEx) {
@@ -57,7 +55,6 @@ public class GlobalExceptionHandler extends AbstractErrorWebExceptionHandler {
                     List.of(mapToErrorDTO(technicalEx.getTechnicalMessage())));
         }
 
-        // Errores inesperados (NullPointerException, errores de base de datos no controlados, etc.)
         log.error("Unexpected system error: ", error);
         return buildResponse(HttpStatus.INTERNAL_SERVER_ERROR, TechnicalMessage.INTERNAL_ERROR,
                 List.of(ErrorDTO.builder()
