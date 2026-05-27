@@ -1,10 +1,10 @@
 package com.example.technology.infrastructure.entrypoints.handler;
 
-import com.example.technology.domain.enums.TechnicalMessage;
-import com.example.technology.domain.exceptions.BusinessException;
-import com.example.technology.domain.exceptions.TechnicalException;
-import com.example.technology.infrastructure.entrypoints.util.APIResponse;
-import com.example.technology.infrastructure.entrypoints.util.ErrorDTO;
+import com.example.technology.domain.constants.Constants;
+import com.example.technology.domain.exceptions.InvalidFieldException;
+import com.example.technology.domain.exceptions.TechnologyAlreadyExistsException;
+import com.example.technology.domain.exceptions.TechnologyNotFoundException;
+import com.example.technology.infrastructure.entrypoints.dto.ErrorResponseDTO;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.boot.autoconfigure.web.WebProperties;
 import org.springframework.boot.autoconfigure.web.reactive.error.AbstractErrorWebExceptionHandler;
@@ -17,9 +17,6 @@ import org.springframework.http.codec.ServerCodecConfigurer;
 import org.springframework.stereotype.Component;
 import org.springframework.web.reactive.function.server.*;
 import reactor.core.publisher.Mono;
-
-import java.time.Instant;
-import java.util.List;
 
 @Component
 @Order(-2)
@@ -43,44 +40,33 @@ public class GlobalExceptionHandler extends AbstractErrorWebExceptionHandler {
     private Mono<ServerResponse> renderErrorResponse(ServerRequest request) {
         Throwable error = getError(request);
 
-        if (error instanceof BusinessException businessEx) {
-            log.warn("Business rule violation: {}", businessEx.getMessage());
-            return buildResponse(HttpStatus.BAD_REQUEST, TechnicalMessage.INVALID_PARAMETERS,
-                    List.of(mapToErrorDTO(businessEx.getTechnicalMessage())));
+        if (error instanceof TechnologyAlreadyExistsException technologyAlreadyExistsException) {
+            log.warn("Business rule violation: {}", technologyAlreadyExistsException.getMessage());
+            return buildErrorDTO(HttpStatus.CONFLICT, Constants.TECHNOLOGY_ALREADY_EXISTS_CODE, technologyAlreadyExistsException.getMessage());
         }
 
-        if (error instanceof TechnicalException technicalEx) {
-            log.error("Technical exception occurred: ", technicalEx);
-            return buildResponse(HttpStatus.INTERNAL_SERVER_ERROR, TechnicalMessage.INTERNAL_ERROR,
-                    List.of(mapToErrorDTO(technicalEx.getTechnicalMessage())));
+        if (error instanceof TechnologyNotFoundException technologyNotFoundException) {
+            log.warn("Business rule violation: {}", technologyNotFoundException.getMessage());
+            return buildErrorDTO(HttpStatus.NOT_FOUND, Constants.TECHNOLOGY_NOT_FOUND_CODE, technologyNotFoundException.getMessage());
+        }
+
+        if (error instanceof InvalidFieldException invalidFieldException) {
+            log.warn("Business rule violation: {}", invalidFieldException.getMessage());
+            return buildErrorDTO(HttpStatus.BAD_REQUEST, Constants.INVALID_FIELD_CODE, invalidFieldException.getMessage());
         }
 
         log.error("Unexpected system error: ", error);
-        return buildResponse(HttpStatus.INTERNAL_SERVER_ERROR, TechnicalMessage.INTERNAL_ERROR,
-                List.of(ErrorDTO.builder()
-                        .code(TechnicalMessage.INTERNAL_ERROR.getCode())
-                        .message(TechnicalMessage.INTERNAL_ERROR.getMessage())
-                        .build()));
+        return buildErrorDTO(HttpStatus.INTERNAL_SERVER_ERROR, Constants.INTERNAL_ERROR_CODE, Constants.INTERNAL_ERROR);
     }
 
-    private ErrorDTO mapToErrorDTO(TechnicalMessage message) {
-        return ErrorDTO.builder()
-                .code(message.getCode())
-                .message(message.getMessage())
-                .param(message.getParam())
-                .build();
-    }
-
-    private Mono<ServerResponse> buildResponse(HttpStatus httpStatus, TechnicalMessage error, List<ErrorDTO> errors) {
-        APIResponse apiErrorResponse = APIResponse.builder()
-                .code(error.getCode())
-                .message(error.getMessage())
-                .date(Instant.now().toString())
-                .errors(errors)
+    private Mono<ServerResponse> buildErrorDTO(HttpStatus status, String code, String message) {
+        ErrorResponseDTO errorResponse = ErrorResponseDTO.builder()
+                .code(code)
+                .message(message)
                 .build();
 
-        return ServerResponse.status(httpStatus)
+        return ServerResponse.status(status)
                 .contentType(MediaType.APPLICATION_JSON)
-                .bodyValue(apiErrorResponse);
+                .bodyValue(errorResponse);
     }
 }

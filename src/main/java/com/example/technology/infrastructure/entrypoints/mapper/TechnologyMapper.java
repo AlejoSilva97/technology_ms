@@ -10,6 +10,6 @@ public interface TechnologyMapper {
     @Mapping(target = "id", ignore = true)
     @Mapping(source = "name", target = "name")
     @Mapping(source = "description", target = "description")
-    Technology technologyDTOToTechnology(TechnologyDTO technologyDTO);
-    TechnologyDTO technologyToTechnologyDTO(Technology technology);
+    Technology toTechnology(TechnologyDTO technologyDTO);
+    TechnologyDTO toTechnologyDTO(Technology technology);
 }
