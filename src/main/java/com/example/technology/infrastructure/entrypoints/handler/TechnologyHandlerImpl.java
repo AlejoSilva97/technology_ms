@@ -1,7 +1,7 @@
 package com.example.technology.infrastructure.entrypoints.handler;
 
 import com.example.technology.domain.api.TechnologyServicePort;
-import com.example.technology.domain.enums.TechnicalMessage;
+import com.example.technology.domain.constants.Constants;
 import com.example.technology.infrastructure.entrypoints.dto.TechnologyDTO;
 import com.example.technology.infrastructure.entrypoints.mapper.TechnologyMapper;
 import lombok.RequiredArgsConstructor;
@@ -23,12 +23,12 @@ public class TechnologyHandlerImpl {
 
     public Mono<ServerResponse> createTechnology(ServerRequest request) {
         return request.bodyToMono(TechnologyDTO.class)
-                .flatMap(technology -> technologyServicePort.registerTechnology(technologyMapper.technologyDTOToTechnology(technology))
+                .flatMap(technology -> technologyServicePort.registerTechnology(technologyMapper.toTechnology(technology))
                         .doOnSuccess(savedTechnology -> log.info("Technology created successfully"))
                 )
                 .flatMap(savedTechnology -> ServerResponse
                         .status(HttpStatus.CREATED)
-                        .bodyValue(TechnicalMessage.TECHNOLOGY_CREATED.getMessage()));
+                        .bodyValue(Constants.TECHNOLOGY_CREATED));
     }
 
     public Mono<ServerResponse> getById(ServerRequest request) {
@@ -38,6 +38,6 @@ public class TechnologyHandlerImpl {
                 .flatMap(technology -> ServerResponse
                         .ok()
                         .contentType(MediaType.APPLICATION_JSON)
-                        .bodyValue(technologyMapper.technologyToTechnologyDTO(technology)));
+                        .bodyValue(technologyMapper.toTechnologyDTO(technology)));
     }
 }
