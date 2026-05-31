@@ -18,8 +18,7 @@ import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.reactive.function.server.RouterFunction;
 import org.springframework.web.reactive.function.server.ServerResponse;
 
-import static org.springframework.web.reactive.function.server.RequestPredicates.GET;
-import static org.springframework.web.reactive.function.server.RequestPredicates.POST;
+import static org.springframework.web.reactive.function.server.RequestPredicates.*;
 import static org.springframework.web.reactive.function.server.RouterFunctions.route;
 
 @Configuration
@@ -74,10 +73,35 @@ public class RouterRest {
                                     @ApiResponse(responseCode = "404", description = "Tecnología no encontrada")
                             }
                     )
+            ),
+            @RouterOperation(
+                    path = "/technologies/{id}",
+                    method = RequestMethod.DELETE,
+                    beanClass = TechnologyHandlerImpl.class,
+                    beanMethod = "deleteById",
+                    operation = @Operation(
+                            summary = "Eliminar una tecnología por ID",
+                            description = "Elimina una tecnología del sistema si existe, basándose en su identificador único.",
+                            operationId = "deleteById",
+                            parameters = {
+                                    @Parameter(name = "id", in = ParameterIn.PATH, description = "ID de la tecnología a eliminar", required = true)
+                            },
+                            responses = {
+                                    @ApiResponse(
+                                            responseCode = "204",
+                                            description = "Tecnología eliminada con éxito"
+                                    ),
+                                    @ApiResponse(
+                                            responseCode = "404",
+                                            description = "Tecnología no encontrada (ID inexistente)"
+                                    )
+                            }
+                    )
             )
     })
     public RouterFunction<ServerResponse> routerFunction(TechnologyHandlerImpl technologyHandler) {
         return route(POST("/technologies"), technologyHandler::createTechnology)
-                .andRoute(GET("/technologies/{id}"), technologyHandler::getById);
+                .andRoute(GET("/technologies/{id}"), technologyHandler::getById)
+                .andRoute(DELETE("/technologies/{id}"), technologyHandler::deleteById);
     }
 }

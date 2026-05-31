@@ -29,4 +29,12 @@ public class TechnologyUseCase implements TechnologyServicePort {
         return techPersistencePort.findById(id)
                 .switchIfEmpty(Mono.error(new TechnologyNotFoundException(String.format(Constants.TECHNOLOGY_NOT_FOUND, id))));
     }
+
+    @Override
+    public Mono<Void> deleteById(Long id) {
+        return techPersistencePort.existById(id)
+                .flatMap(exists -> exists
+                        ? techPersistencePort.deleteById(id)
+                        : Mono.error(new TechnologyNotFoundException(String.format(Constants.TECHNOLOGY_NOT_FOUND, id))));
+    }
 }

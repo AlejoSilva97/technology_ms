@@ -89,4 +89,36 @@ class TechnologyUseCaseTest {
 
         verify(techPersistencePort, times(1)).findById(targetId);
     }
+
+    @Test
+    @DisplayName("Should delete technology successfully when ID exists")
+    void should_DeleteTechnology_When_IdExists() {
+        Long targetId = 1L;
+
+        when(techPersistencePort.existById(targetId)).thenReturn(Mono.just(true));
+        when(techPersistencePort.deleteById(targetId)).thenReturn(Mono.empty()); // Mono<Void> se mockea retornando Mono.empty()
+
+        StepVerifier.create(technologyUseCase.deleteById(targetId))
+                .verifyComplete(); // Al ser Mono<Void> solo esperamos que se complete con éxito sin emitir elementos
+
+        verify(techPersistencePort, times(1)).existById(targetId);
+        verify(techPersistencePort, times(1)).deleteById(targetId);
+    }
+
+    @Test
+    @DisplayName("Should throw TechnologyNotFoundException when deleting an ID that does not exist")
+    void should_ThrowException_When_IdDoesNotExistOnDelete() {
+        Long targetId = 99L;
+        String expectedMessage = String.format(Constants.TECHNOLOGY_NOT_FOUND, targetId);
+
+        when(techPersistencePort.existById(targetId)).thenReturn(Mono.just(false));
+
+        StepVerifier.create(technologyUseCase.deleteById(targetId))
+                .expectErrorMatches(throwable -> throwable instanceof TechnologyNotFoundException
+                        && throwable.getMessage().equals(expectedMessage))
+                .verify();
+
+        verify(techPersistencePort, times(1)).existById(targetId);
+        verify(techPersistencePort, never()).deleteById(anyLong()); // Validamos que jamás intente borrar si no existe
+    }
 }

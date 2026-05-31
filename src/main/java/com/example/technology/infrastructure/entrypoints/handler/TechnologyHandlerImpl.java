@@ -40,4 +40,12 @@ public class TechnologyHandlerImpl {
                         .contentType(MediaType.APPLICATION_JSON)
                         .bodyValue(technologyMapper.toTechnologyDTO(technology)));
     }
+
+    public Mono<ServerResponse> deleteById(ServerRequest request) {
+        String idString = request.pathVariable("id");
+        Long id = Long.parseLong(idString);
+
+        return technologyServicePort.deleteById(id)
+                .then(ServerResponse.noContent().build());
+    }
 }
